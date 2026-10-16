@@ -1,0 +1,47 @@
+[
+  {
+    "data_id": "DATA-C2710DDF",
+    "source_file": "employee_002.txt",
+    "owner": "HR Department",
+    "data_steward": "Data Governance Team",
+    "classification": "CONFIDENTIAL",
+    "purpose": "Internal employee information",
+    "retention_rule": "Delete when no longer required",
+    "ingested_at": "2026-08-23T22:40:11",
+    "vector_collection": "company_documents",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "llm": "gemma3:1b",
+    "status": "DELETED",
+    "deleted_at": "2026-09-11T12:38:18"
+  },
+  {
+    "data_id": "DATA-5E15A5C9",
+    "source_file": "policy.txt",
+    "owner": "HR Department",
+    "data_steward": "Data Governance Team",
+    "classification": "CONFIDENTIAL",
+    "purpose": "Internal employee information",
+    "retention_rule": "Delete when no longer required",
+    "ingested_at": "2026-08-23T22:40:11",
+    "vector_collection": "company_documents",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "llm": "gemma3:1b",
+    "status": "ACTIVE",
+    "deleted_at": null
+  },
+  {
+    "data_id": "DATA-D0FD38D3",
+    "source_file": "employee_001.txt",
+    "owner": "HR Department",
+    "data_steward": "Data Governance Team",
+    "classification": "CONFIDENTIAL",
+    "purpose": "Internal employee information",
+    "retention_rule": "Delete when no longer required",
+    "ingested_at": "2026-08-23T23:09:54",
+    "vector_collection": "company_documents",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "llm": "gemma3:1b",
+    "status": "DELETED",
+    "deleted_at": "2026-08-28T13:08:11"
+  }
+]

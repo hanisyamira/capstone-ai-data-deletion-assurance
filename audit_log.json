@@ -1,0 +1,106 @@
+[
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260823223711",
+    "timestamp": "2026-08-23T22:37:11",
+    "target": "employee_001.txt",
+    "vector_record_deleted": true,
+    "original_file_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DELETION_VERIFICATION",
+    "verification_id": "VER-20260823223715",
+    "timestamp": "2026-08-23T22:37:15",
+    "target": "employee_001.txt",
+    "vector_db_check": true,
+    "source_file_check": true,
+    "status": "PASS"
+  },
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260823230327",
+    "data_id": "DATA-D0FD38D3",
+    "timestamp": "2026-08-23T23:03:27",
+    "target": "employee_001.txt",
+    "source_deleted": true,
+    "vector_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DELETION_VERIFICATION",
+    "verification_id": "VER-20260823230330",
+    "timestamp": "2026-08-23T23:03:30",
+    "data_id": "DATA-D0FD38D3",
+    "source_check": true,
+    "vector_check": true,
+    "lineage_check": false,
+    "status": "FAIL"
+  },
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260823231116",
+    "data_id": "DATA-D0FD38D3",
+    "timestamp": "2026-08-23T23:11:16",
+    "target": "employee_001.txt",
+    "source_deleted": true,
+    "vector_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DELETION_VERIFICATION",
+    "verification_id": "VER-20260823231119",
+    "timestamp": "2026-08-23T23:11:19",
+    "data_id": "DATA-D0FD38D3",
+    "source_check": true,
+    "vector_check": true,
+    "lineage_check": true,
+    "status": "PASS"
+  },
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260828130730",
+    "data_id": "DATA-D0FD38D3",
+    "timestamp": "2026-08-28T13:07:30",
+    "target": "employee_001.txt",
+    "source_deleted": true,
+    "vector_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260828130811",
+    "data_id": "DATA-D0FD38D3",
+    "timestamp": "2026-08-28T13:08:11",
+    "target": "employee_001.txt",
+    "source_deleted": true,
+    "vector_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DATA_DELETION",
+    "deletion_id": "DEL-20260911123818",
+    "data_id": "DATA-C2710DDF",
+    "timestamp": "2026-09-11T12:38:18",
+    "target": "employee_002.txt",
+    "source_deleted": true,
+    "vector_deleted": true,
+    "requested_by": "system_admin",
+    "status": "PENDING_VERIFICATION"
+  },
+  {
+    "event_type": "DELETION_VERIFICATION",
+    "verification_id": "VER-20260911123827",
+    "timestamp": "2026-09-11T12:38:27",
+    "data_id": "DATA-C2710DDF",
+    "source_check": true,
+    "vector_check": true,
+    "lineage_check": true,
+    "status": "PASS"
+  }
+]
