@@ -92,7 +92,7 @@ page = st.radio(
 if page == pages[0]:
     st.header("The story behind the project")
 
-    video = BASE / "capstone video.mp4"
+    video = BASE / "capstone video updated.mp4"
     if video.exists():
         st.video(str(video))
     else:
