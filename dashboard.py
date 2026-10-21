@@ -306,91 +306,241 @@ elif page == pages[1]:
     )
 
 
+
 elif page == pages[2]:
     st.header("🛡️ Deletion Verification Explorer")
     st.caption(
-        "Explore real historical verification events "
-        "recorded by the local RAG prototype."
+        "Watch the local prototype demonstration, then explore "
+        "the recorded deletion evidence for each document."
     )
 
-    if audit_error:
-        st.error(audit_error)
+    # -------------------------------------------
+    # 1. DELETION VERIFICATION VIDEO
+    # -------------------------------------------
+    st.subheader("1. Deletion Verification Demonstration")
 
-    passed = sum(result(x) == "PASS" for x in checks)
-    failed = sum(result(x) == "FAIL" for x in checks)
-    incomplete = sum(result(x) == "INCOMPLETE" for x in checks)
+    verification_video = BASE / "deletion verification.mp4"
 
-    a, b, c = st.columns(3)
+    if verification_video.exists():
+        st.video(str(verification_video))
+    else:
+        st.warning(
+            "Video not found. Upload deletionverification.mp4 "
+            "to the same GitHub folder as dashboard_simple.py."
+        )
 
-    with a:
-        with st.container(border=True):
-            st.metric("✅ Complete PASS", passed)
-
-    with b:
-        with st.container(border=True):
-            st.metric("❌ Failed", failed)
-
-    with c:
-        with st.container(border=True):
-            st.metric("ℹ️ Incomplete", incomplete)
+    st.caption(
+        "Recorded demonstration of the local RAG prototype. "
+        "This video does not represent a live deletion operation."
+    )
 
     st.divider()
 
-    st.subheader("1. Explore a Recorded Verification")
+    # -------------------------------------------
+    # 2. HISTORICAL VERIFICATION SUMMARY
+    # -------------------------------------------
+    st.subheader("2. Historical Verification Summary")
 
-    if checks:
-        ordered = sorted(
-            checks,
-            key=lambda x: str(x.get("timestamp", "")),
-            reverse=True,
+    if audit_error:
+        st.error(audit_error)
+    if lineage_error:
+        st.error(lineage_error)
+
+    passed = sum(result(x) == "PASS" for x in checks)
+    failed = sum(result(x) == "FAIL" for x in checks)
+    incomplete = sum(
+        result(x) == "INCOMPLETE" for x in checks
+    )
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("✅ Complete PASS", passed)
+
+    with col2:
+        st.metric("❌ Failed", failed)
+
+    with col3:
+        st.metric("⚠️ Incomplete", incomplete)
+
+    st.caption(
+        "These totals represent historical verification events, "
+        "not the number of unique documents."
+    )
+
+    st.divider()
+
+    # -------------------------------------------
+    # 3. DOCUMENT SELECTION
+    # -------------------------------------------
+    st.subheader("3. Select a Document")
+
+    documents = {
+        "employee_001.txt": "Employee Record 001",
+        "employee_002.txt": "Employee Record 002",
+        "policy.txt": "Organisational Policy",
+    }
+
+    selected_file = st.selectbox(
+        "Choose a document to investigate",
+        list(documents.keys()),
+        format_func=lambda filename: (
+            f"{documents[filename]} ({filename})"
+        ),
+    )
+
+    # Match lineage records to selected document
+    related_lineage = [
+        record for record in lineage
+        if record.get("source_file") == selected_file
+    ]
+
+    related_ids = {
+        str(record["data_id"])
+        for record in related_lineage
+        if record.get("data_id") is not None
+    }
+
+    # Match audit records using filename or lineage data ID
+    def matches_document(event):
+        filename_fields = (
+            "source_file", "target", "filename"
         )
 
-        selected = st.selectbox(
-            "Select an audit event",
-            range(len(ordered)),
-            format_func=lambda i: (
-                f"{ordered[i].get('timestamp', 'Unknown date')} "
-                f"· {ordered[i].get('data_id') or 'Unknown record'} "
-                f"· {result(ordered[i])}"
-            ),
+        if any(
+            event.get(field) == selected_file
+            for field in filename_fields
+        ):
+            return True
+
+        event_id = event.get("data_id")
+        return (
+            event_id is not None
+            and str(event_id) in related_ids
         )
 
-        event = ordered[selected]
-        status = result(event)
+    matched_events = sorted(
+        [
+            event for event in checks
+            if matches_document(event)
+        ],
+        key=lambda event: str(
+            event.get("timestamp", "")
+        ),
+        reverse=True,
+    )
 
-        st.markdown("### Verification Outcome")
+    # -------------------------------------------
+    # 4. DOCUMENT LINEAGE STATUS
+    # -------------------------------------------
+    st.subheader("4. Document Information")
 
-        if status == "PASS":
-            st.success(
-                "VERIFIED: All three recorded checks passed."
+    with st.container(border=True):
+        st.markdown(f"### 📄 {selected_file}")
+        st.write(documents[selected_file])
+
+        if related_lineage:
+            latest_lineage = sorted(
+                related_lineage,
+                key=lambda record: str(
+                    record.get("deleted_at")
+                    or record.get("ingested_at")
+                    or ""
+                ),
+                reverse=True,
+            )[0]
+
+            lineage_status = str(
+                latest_lineage.get("status", "UNKNOWN")
+            ).upper()
+
+            if lineage_status == "DELETED":
+                st.success("Lineage status: DELETED")
+            elif lineage_status == "ACTIVE":
+                st.info("Lineage status: ACTIVE")
+            else:
+                st.warning(
+                    f"Lineage status: {lineage_status}"
+                )
+
+            st.write(
+                "**Data ID:**",
+                latest_lineage.get(
+                    "data_id", "Not recorded"
+                ),
             )
-        elif status == "FAIL":
-            st.error(
-                "NOT FULLY VERIFIED: One or more checks failed."
+            st.write(
+                "**Classification:**",
+                latest_lineage.get(
+                    "classification", "Not recorded"
+                ),
+            )
+            st.write(
+                "**Data owner:**",
+                latest_lineage.get(
+                    "owner", "Not recorded"
+                ),
             )
         else:
             st.warning(
-                "INCOMPLETE: The audit record does not "
-                "contain sufficient verification evidence."
+                "No matching lineage record found."
             )
 
-        st.subheader("2. Verification Control Results")
+        st.metric(
+            "Recorded verification events",
+            len(matched_events),
+        )
+
+    st.divider()
+
+    # -------------------------------------------
+    # 5. INTERACTIVE VERIFICATION RESULTS
+    # -------------------------------------------
+    st.subheader("5. Explore Verification Results")
+
+    if matched_events:
+        event_index = st.selectbox(
+            "Select a verification event",
+            range(len(matched_events)),
+            format_func=lambda i: (
+                f"{matched_events[i].get('timestamp', 'Unknown date')}"
+                f" — {result(matched_events[i])}"
+            ),
+        )
+
+        event = matched_events[event_index]
+        status = result(event)
+
+        if status == "PASS":
+            st.success(
+                "VERIFIED — All three recorded checks passed."
+            )
+        elif status == "FAIL":
+            st.error(
+                "NOT FULLY VERIFIED — At least one "
+                "required check failed."
+            )
+        else:
+            st.warning(
+                "INCOMPLETE — The available audit evidence "
+                "does not establish a complete verification."
+            )
 
         controls = [
             (
                 "📄 Original File",
                 "source_check",
-                "Checks whether the original document is absent.",
+                "Checks that the targeted original file is absent.",
             ),
             (
                 "🗄️ Vector Database",
                 "vector_check",
-                "Checks whether associated vector records are absent.",
+                "Checks that associated vector records are absent.",
             ),
             (
                 "🔗 Data Lineage",
                 "lineage_check",
-                "Checks whether the deletion status was recorded.",
+                "Checks that the deletion status is recorded.",
             ),
         ]
 
@@ -399,79 +549,78 @@ elif page == pages[2]:
         for col, (title, field, explanation) in zip(
             cols, controls
         ):
-            value = event.get(field)
-
             with col:
                 with st.container(border=True):
                     st.markdown(f"**{title}**")
 
+                    value = event.get(field)
+
                     if value is True:
-                        st.success("PASS")
+                        st.success("✓ PASS")
                     elif value is False:
-                        st.error("FAIL")
+                        st.error("✕ FAIL")
                     else:
                         st.warning("NOT RECORDED")
 
                     st.caption(explanation)
 
-        st.divider()
-
-        st.subheader("3. What Does This Result Mean?")
+        # Plain-language explanation
+        st.subheader("6. What Does This Result Mean?")
 
         if status == "PASS":
             st.info(
                 "The original file, associated vector records, "
                 "and lineage status all passed their checks. "
-                "This supports deletion assurance within "
-                "the tested local components."
+                "This provides recorded evidence for deletion "
+                "within the tested local components."
             )
 
         elif status == "FAIL":
-            failures = [
+            failed_controls = [
                 title
                 for title, field, _ in controls
                 if event.get(field) is False
             ]
 
-            if failures:
+            if failed_controls:
                 st.error(
-                    "The following checks failed: "
-                    + ", ".join(failures)
+                    "Failed control(s): "
+                    + ", ".join(failed_controls)
                 )
 
             st.write(
-                "This demonstrates why removing a file alone "
-                "is insufficient. Deletion assurance also "
-                "requires reliable verification and evidence."
+                "A deletion can fail verification even when "
+                "the original file and vector records are removed. "
+                "For example, a failed lineage check means "
+                "the deletion record was not properly verified."
             )
 
         else:
             st.warning(
-                "This historical event is missing one or more "
-                "verification results. It cannot be treated "
-                "as a complete PASS."
+                "The historical audit record is incomplete. "
+                "A complete deletion verification cannot "
+                "be claimed without sufficient evidence."
             )
 
-        st.subheader("4. Supporting Audit Evidence")
-
-        with st.expander("🔍 View Technical Audit Record"):
+        # Technical evidence
+        with st.expander("🔍 View Original Audit Evidence"):
             st.json(event)
 
-        st.divider()
+        # Historical events for selected document
+        st.subheader("7. Verification History")
 
-        st.subheader("5. Verification History")
-
-        history = []
-
-        for item in ordered:
-            history.append({
-                "Timestamp": item.get("timestamp", "—"),
-                "Data ID": item.get("data_id") or "—",
+        history = [
+            {
+                "Timestamp": item.get(
+                    "timestamp", "Unknown"
+                ),
                 "Source": item.get("source_check"),
                 "Vector": item.get("vector_check"),
                 "Lineage": item.get("lineage_check"),
-                "Status": result(item),
-            })
+                "Result": result(item),
+            }
+            for item in matched_events
+        ]
 
         st.dataframe(
             pd.DataFrame(history),
@@ -480,14 +629,33 @@ elif page == pages[2]:
         )
 
     else:
-        st.info("No recorded verification events were found.")
+        st.info(
+            "No matching verification event was found "
+            "for this document. This does not prove "
+            "that deletion succeeded or failed."
+        )
+
+    # -------------------------------------------
+    # 8. SUPPORTING LINEAGE EVIDENCE
+    # -------------------------------------------
+    with st.expander("📚 View Document Lineage Records"):
+        if related_lineage:
+            st.json(related_lineage)
+        else:
+            st.write(
+                "No matching lineage records are available."
+            )
+
+    st.divider()
 
     st.caption(
-        "Verification is limited to source files, "
-        "vector records and lineage status. "
-        "Backups, third-party services and model weights "
-        "are outside the verified scope."
+        "Academic proof of concept. This page displays "
+        "historical evidence and does not execute live deletion. "
+        "Verification is limited to source files, vector records "
+        "and lineage status. Backups, third-party systems "
+        "and model weights are outside the verified scope."
     )
+
 
 
 else:
