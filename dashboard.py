@@ -305,29 +305,40 @@ elif page == pages[1]:
         "and model-weight unlearning are not verified."
     )
 
+
 elif page == pages[2]:
-    st.header("Did the deletion checks succeed?")
-    st.write(
-        "These results come from historical prototype audit "
-        "records. The dashboard does not perform live deletion."
+    st.header("🛡️ Deletion Verification Explorer")
+    st.caption(
+        "Explore real historical verification events "
+        "recorded by the local RAG prototype."
     )
 
-    for err in (lineage_error, audit_error):
-        if err:
-            st.warning(err)
+    if audit_error:
+        st.error(audit_error)
 
     passed = sum(result(x) == "PASS" for x in checks)
     failed = sum(result(x) == "FAIL" for x in checks)
     incomplete = sum(result(x) == "INCOMPLETE" for x in checks)
 
     a, b, c = st.columns(3)
-    a.metric("✅ Complete PASS", passed)
-    b.metric("❌ Failed checks", failed)
-    c.metric("ℹ️ Incomplete records", incomplete)
+
+    with a:
+        with st.container(border=True):
+            st.metric("✅ Complete PASS", passed)
+
+    with b:
+        with st.container(border=True):
+            st.metric("❌ Failed", failed)
+
+    with c:
+        with st.container(border=True):
+            st.metric("ℹ️ Incomplete", incomplete)
+
+    st.divider()
+
+    st.subheader("1. Explore a Recorded Verification")
 
     if checks:
-        st.subheader("Explore a recorded verification")
-
         ordered = sorted(
             checks,
             key=lambda x: str(x.get("timestamp", "")),
@@ -335,7 +346,7 @@ elif page == pages[2]:
         )
 
         selected = st.selectbox(
-            "Choose an audit event",
+            "Select an audit event",
             range(len(ordered)),
             format_func=lambda i: (
                 f"{ordered[i].get('timestamp', 'Unknown date')} "
@@ -347,61 +358,137 @@ elif page == pages[2]:
         event = ordered[selected]
         status = result(event)
 
+        st.markdown("### Verification Outcome")
+
         if status == "PASS":
             st.success(
-                "All three recorded verification checks passed."
+                "VERIFIED: All three recorded checks passed."
             )
         elif status == "FAIL":
             st.error(
-                "Deletion could not be fully verified. "
-                "At least one check failed."
+                "NOT FULLY VERIFIED: One or more checks failed."
             )
         else:
             st.warning(
-                "There is insufficient evidence to establish "
-                "a complete verification result."
+                "INCOMPLETE: The audit record does not "
+                "contain sufficient verification evidence."
             )
 
-        labels = {
-            "source_check": "Original document",
-            "vector_check": "AI search database",
-            "lineage_check": "Deletion record",
-        }
+        st.subheader("2. Verification Control Results")
 
-        for field, label in labels.items():
+        controls = [
+            (
+                "📄 Original File",
+                "source_check",
+                "Checks whether the original document is absent.",
+            ),
+            (
+                "🗄️ Vector Database",
+                "vector_check",
+                "Checks whether associated vector records are absent.",
+            ),
+            (
+                "🔗 Data Lineage",
+                "lineage_check",
+                "Checks whether the deletion status was recorded.",
+            ),
+        ]
+
+        cols = st.columns(3)
+
+        for col, (title, field, explanation) in zip(
+            cols, controls
+        ):
             value = event.get(field)
-            if value is True:
-                st.write(f"✅ {label}: Check passed")
-            elif value is False:
-                st.write(f"❌ {label}: Check failed")
-            else:
-                st.write(f"ℹ️ {label}: Not recorded")
 
-        with st.expander("View original audit evidence"):
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"**{title}**")
+
+                    if value is True:
+                        st.success("PASS")
+                    elif value is False:
+                        st.error("FAIL")
+                    else:
+                        st.warning("NOT RECORDED")
+
+                    st.caption(explanation)
+
+        st.divider()
+
+        st.subheader("3. What Does This Result Mean?")
+
+        if status == "PASS":
+            st.info(
+                "The original file, associated vector records, "
+                "and lineage status all passed their checks. "
+                "This supports deletion assurance within "
+                "the tested local components."
+            )
+
+        elif status == "FAIL":
+            failures = [
+                title
+                for title, field, _ in controls
+                if event.get(field) is False
+            ]
+
+            if failures:
+                st.error(
+                    "The following checks failed: "
+                    + ", ".join(failures)
+                )
+
+            st.write(
+                "This demonstrates why removing a file alone "
+                "is insufficient. Deletion assurance also "
+                "requires reliable verification and evidence."
+            )
+
+        else:
+            st.warning(
+                "This historical event is missing one or more "
+                "verification results. It cannot be treated "
+                "as a complete PASS."
+            )
+
+        st.subheader("4. Supporting Audit Evidence")
+
+        with st.expander("🔍 View Technical Audit Record"):
             st.json(event)
 
-        st.subheader("Historical verification events")
-        rows = [
-            {
-                "Date": x.get("timestamp", "—"),
-                "Data ID": x.get("data_id") or "—",
-                "Result": result(x),
-            }
-            for x in ordered
-        ]
+        st.divider()
+
+        st.subheader("5. Verification History")
+
+        history = []
+
+        for item in ordered:
+            history.append({
+                "Timestamp": item.get("timestamp", "—"),
+                "Data ID": item.get("data_id") or "—",
+                "Source": item.get("source_check"),
+                "Vector": item.get("vector_check"),
+                "Lineage": item.get("lineage_check"),
+                "Status": result(item),
+            })
+
         st.dataframe(
-            pd.DataFrame(rows),
+            pd.DataFrame(history),
             use_container_width=True,
             hide_index=True,
         )
+
     else:
         st.info("No recorded verification events were found.")
 
     st.caption(
-        "PASS applies only to the three recorded checks. "
-        "It does not establish deletion from backups, "
-        "external services, logs or model weights."
+        "Verification is limited to source files, "
+        "vector records and lineage status. "
+        "Backups, third-party services and model weights "
+        "are outside the verified scope."
     )
+
 
 else:
     st.header("Governance and practical value")
