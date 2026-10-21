@@ -76,10 +76,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 pages = [
-    "🏠 Introduction",
-    "🔍 How Deletion Works",
-    "✅ Verification Results",
-    "🛡️ Governance & Cost",
+    "Introduction",
+    "How Deletion Works",
+    "Verification Results",
+    "Governance & Cost",
 ]
 
 page = st.radio(
