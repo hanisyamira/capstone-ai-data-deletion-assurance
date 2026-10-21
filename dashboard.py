@@ -126,45 +126,184 @@ if page == pages[0]:
         "The prototype demonstrates selected local controls."
     )
 
+
 elif page == pages[1]:
-    st.header("How does deletion work?")
-    st.write(
-        "Imagine an employee's information was used by an AI "
-        "application. Deleting the original file may leave "
-        "related records in the AI search database."
+    st.header("Explore the AI System")
+    st.caption(
+        "Select a component to understand how information "
+        "is processed, deleted and verified."
     )
 
-    steps = [
-        ("1. Remove the file",
-         "Remove the original information from its source."),
-        ("2. Remove stored records",
-         "Remove associated entries from the AI search database."),
-        ("3. Update the record",
-         "Record that the information was deleted."),
-        ("4. Check the result",
-         "Verify the selected locations and save the outcome."),
+    components = {
+        "📄 Source Documents": {
+            "technology": "Local text files",
+            "purpose": (
+                "These are the original documents used "
+                "by the AI application."
+            ),
+            "deletion": (
+                "The targeted original file is removed "
+                "from local storage."
+            ),
+            "verification": (
+                "The system checks whether the targeted "
+                "file still exists."
+            ),
+        },
+        "🧠 Embeddings": {
+            "technology": "all-MiniLM-L6-v2",
+            "purpose": (
+                "Documents are converted into numerical "
+                "representations so relevant information "
+                "can be searched."
+            ),
+            "deletion": (
+                "Associated stored embeddings are removed "
+                "from the vector database."
+            ),
+            "verification": (
+                "The system checks for associated vector "
+                "records in ChromaDB."
+            ),
+        },
+        "🗄️ Vector Database": {
+            "technology": "ChromaDB",
+            "purpose": (
+                "Stores embeddings and related information "
+                "for retrieval."
+            ),
+            "deletion": (
+                "Vector records associated with the "
+                "targeted document are removed."
+            ),
+            "verification": (
+                "The system checks whether associated "
+                "records remain in the collection."
+            ),
+        },
+        "🤖 Local LLM": {
+            "technology": "Ollama · Gemma 3 1B",
+            "purpose": (
+                "Generates answers using the relevant "
+                "context retrieved from the database."
+            ),
+            "deletion": (
+                "The prototype does not perform "
+                "model-weight unlearning."
+            ),
+            "verification": (
+                "Model-weight deletion is outside "
+                "the implemented verification scope."
+            ),
+        },
+    }
+
+    st.subheader("1. AI Data Processing Architecture")
+
+    names = list(components.keys())
+    cols = st.columns(4)
+
+    for col, name in zip(cols, names):
+        with col:
+            st.markdown(f"**{name}**")
+            st.caption(components[name]["technology"])
+
+    selected = st.selectbox(
+        "Select a component to explore",
+        names,
+        index=2,
+    )
+
+    component = components[selected]
+
+    with st.container(border=True):
+        st.subheader(selected)
+        st.caption(component["technology"])
+
+        st.markdown("**What does it do?**")
+        st.write(component["purpose"])
+
+        st.markdown("**What happens during deletion?**")
+        st.write(component["deletion"])
+
+        st.markdown("**How is it verified?**")
+        st.write(component["verification"])
+
+    st.divider()
+
+    st.subheader("2. Deletion Assurance Workflow")
+
+    workflow = [
+        ("01", "Remove Source",
+         "Delete the targeted original file."),
+        ("02", "Purge Vectors",
+         "Remove associated records from ChromaDB."),
+        ("03", "Update Lineage",
+         "Record the deletion status and metadata."),
+        ("04", "Verify & Record",
+         "Check the outcomes and save audit evidence."),
     ]
 
-    for title, explanation in steps:
+    cols = st.columns(4)
+
+    for col, (number, title, description) in zip(cols, workflow):
+        with col:
+            with st.container(border=True):
+                st.caption(f"STEP {number}")
+                st.markdown(f"**{title}**")
+                st.write(description)
+
+    st.divider()
+
+    st.subheader("3. Governance & Evidence")
+
+    a, b, c = st.columns(3)
+
+    with a:
         with st.container(border=True):
-            st.subheader(title)
-            st.write(explanation)
+            st.markdown("**🔗 Data Lineage**")
+            st.code("data_lineage.json")
+            st.caption(
+                "Tracks data origins, ownership "
+                "and deletion status."
+            )
+
+    with b:
+        with st.container(border=True):
+            st.markdown("**📋 Audit Evidence**")
+            st.code("audit_log.json")
+            st.caption(
+                "Stores historical verification "
+                "outcomes."
+            )
+
+    with c:
+        with st.container(border=True):
+            st.markdown("**📊 Evidence Dashboard**")
+            st.caption(
+                "Displays recorded results "
+                "for review."
+            )
+
+    with st.expander("🔍 Technical Verification Criteria"):
+        st.markdown("""
+        - **Source check:** Is the original file absent?
+        - **Vector check:** Are associated records absent?
+        - **Lineage check:** Is the deletion status recorded?
+
+        A complete PASS requires all three checks.
+        """)
 
     st.info(
-        "Why verify? Because removing a file is not the same "
-        "as proving that all the checked components "
-        "were handled correctly."
+        "This is an interactive explanation of the "
+        "local prototype architecture. Selecting a component "
+        "does not execute deletion or modify stored data."
     )
 
-    with st.expander("View the technical implementation"):
-        st.write(
-            "The local prototype uses Python, Sentence Transformers, "
-            "ChromaDB and an Ollama-based language model."
-        )
-        st.write(
-            "Deletion verification checks the source file, "
-            "associated vector records and lineage status."
-        )
+    st.caption(
+        "Scope limitation: Backups, external services "
+        "and model-weight unlearning are not verified."
+    )
 
 elif page == pages[2]:
     st.header("Did the deletion checks succeed?")
